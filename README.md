@@ -1,16 +1,27 @@
 # PaperTrail Modern
 
-**Real-time Infosec Compliance Monitoring with Probabilistic Data Structures**
+**Real-time Infosec Compliance Monitoring with Probabilistic Data Structures & Algebird-Style Monoids**
 
-A modern Python/Flask event processing system inspired by [paperTrail](https://github.com/bigsnarfdude/paperTrail) and [akka-http-algebird](https://github.com/bigsnarfdude/akka-http-algebird), designed for memory-efficient compliance monitoring using HyperLogLog, Bloom Filters, and TopK algorithms.
+A modern Python/Flask event processing system inspired by [paperTrail](https://github.com/bigsnarfdude/paperTrail), [akka-http-algebird](https://github.com/bigsnarfdude/akka-http-algebird), and [Twitter Algebird](https://github.com/twitter/algebird). Features memory-efficient compliance monitoring using HyperLogLog, Bloom Filters, TopK algorithms, and composable Monoid abstractions for distributed aggregation.
 
 ## Features
 
-### Probabilistic Data Structures
+### Probabilistic Data Structures (Custom Implementation)
 - **HyperLogLog (HLL)**: Count distinct users, IPs, sessions with ±2% accuracy using only ~12KB memory
 - **Bloom Filters**: Fast "has user accessed system?" queries with 0.1% false positive rate
 - **TopK / Space-Saving**: Track heavy hitters (most active users/IPs) with bounded memory
 - **Count-Min Sketch**: Frequency estimation for security events
+- **Moments**: Statistical aggregation (mean, variance, skewness, kurtosis)
+
+### Algebird-Style Monoids (NEW!)
+- **Composable Aggregations**: Merge results across time windows, systems, and workers
+- **HLLMonoid**: Merge hourly → daily → weekly distinct counts
+- **BloomFilterMonoid**: Union of activity filters across time
+- **TopKMonoid**: Merge heavy hitters from distributed sources
+- **MomentsMonoid**: Combine statistical moments (numerically stable)
+- **Time Window Aggregation**: Automatic hierarchical rollups
+- **Multi-System Aggregation**: Cross-system analytics
+- **Distributed Processing**: Merge results from parallel workers
 
 ### Infosec Compliance Use Cases
 ✅ **Count Distinct**: "How many unique users accessed sensitive_db today?"
