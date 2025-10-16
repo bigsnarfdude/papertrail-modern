@@ -1,0 +1,109 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>PaperTrail Modern - Infosec Compliance Dashboard</title>
+    <link rel="stylesheet" href="/static/css/dashboard.css">
+</head>
+<body>
+    <div class="container">
+        <header>
+            <h1>🔒 PaperTrail Modern</h1>
+            <p>Real-time Infosec Compliance Monitoring with Probabilistic Data Structures</p>
+            <div class="connection-status">
+                <span id="connection-indicator" class="indicator disconnected"></span>
+                <span id="connection-text">Disconnected</span>
+            </div>
+        </header>
+
+        <main>
+            <!-- Metrics Summary -->
+            <section class="metrics-grid">
+                <div class="metric-card">
+                    <h3>Unique Users (24h)</h3>
+                    <div class="metric-value" id="unique-users-daily">--</div>
+                    <div class="metric-label">Estimated ±2%</div>
+                </div>
+                <div class="metric-card">
+                    <h3>Unique Users (1h)</h3>
+                    <div class="metric-value" id="unique-users-hourly">--</div>
+                    <div class="metric-label">Current Hour</div>
+                </div>
+                <div class="metric-card">
+                    <h3>Unique IPs (24h)</h3>
+                    <div class="metric-value" id="unique-ips-daily">--</div>
+                    <div class="metric-label">Distinct IPs</div>
+                </div>
+                <div class="metric-card">
+                    <h3>Active Sessions</h3>
+                    <div class="metric-value" id="unique-sessions-hourly">--</div>
+                    <div class="metric-label">Current Hour</div>
+                </div>
+            </section>
+
+            <!-- Activity Check -->
+            <section class="panel">
+                <h2>Activity Check (Bloom Filter)</h2>
+                <div class="activity-check">
+                    <div class="form-group">
+                        <input type="text" id="check-user-id" placeholder="User ID">
+                        <input type="text" id="check-system" placeholder="System" value="production_db">
+                        <select id="check-window">
+                            <option value="1d">Last 24 hours</option>
+                            <option value="1w">Last 7 days</option>
+                        </select>
+                        <button onclick="checkActivity()">Check Access</button>
+                    </div>
+                    <div id="activity-result" class="result"></div>
+                </div>
+            </section>
+
+            <!-- Top Active Users -->
+            <section class="panel">
+                <h2>Top Active Users (Last Hour)</h2>
+                <div id="top-users" class="top-list">
+                    <div class="loading">Loading...</div>
+                </div>
+            </section>
+
+            <!-- Top Active IPs -->
+            <section class="panel">
+                <h2>Top Active IPs (Last Hour)</h2>
+                <div id="top-ips" class="top-list">
+                    <div class="loading">Loading...</div>
+                </div>
+            </section>
+
+            <!-- Real-time Event Stream -->
+            <section class="panel">
+                <h2>Real-time Event Stream</h2>
+                <div id="event-stream" class="event-stream">
+                    <div class="event-item">Waiting for events...</div>
+                </div>
+            </section>
+
+            <!-- System Controls -->
+            <section class="panel">
+                <h2>Controls</h2>
+                <div class="controls">
+                    <label for="system-select">System:</label>
+                    <select id="system-select" onchange="changeSystem()">
+                        <option value="production_db">Production DB</option>
+                        <option value="staging_db">Staging DB</option>
+                        <option value="api_gateway">API Gateway</option>
+                    </select>
+                    <button onclick="refreshDashboard()">Refresh</button>
+                    <button onclick="submitTestEvent()">Send Test Event</button>
+                </div>
+            </section>
+        </main>
+
+        <footer>
+            <p>Powered by HyperLogLog, Bloom Filters, and TopK • Memory-efficient compliance monitoring</p>
+        </footer>
+    </div>
+
+    <script src="/static/js/dashboard.js"></script>
+</body>
+</html>

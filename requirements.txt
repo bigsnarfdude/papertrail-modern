@@ -1,0 +1,33 @@
+# Web Framework
+Flask==3.0.0
+Flask-CORS==4.0.0
+gunicorn==21.2.0
+
+# Data Validation
+pydantic==2.5.0
+pydantic-settings==2.1.0
+
+# Redis
+redis==5.0.1
+hiredis==2.2.3
+
+# Probabilistic Data Structures
+datasketch==1.6.4
+pybloom-live==4.0.0
+mmh3==4.1.0
+
+# Background Tasks
+APScheduler==3.10.4
+
+# Utilities
+python-dotenv==1.0.0
+python-dateutil==2.8.2
+
+# Testing
+pytest==7.4.3
+pytest-cov==4.1.0
+pytest-asyncio==0.21.1
+
+# Development
+black==23.12.1
+flake8==6.1.0
