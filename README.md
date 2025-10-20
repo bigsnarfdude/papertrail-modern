@@ -1,5 +1,6 @@
 # PaperTrail Modern
 
+
 **Real-time Infosec Compliance Monitoring with Probabilistic Data Structures & Algebird-Style Monoids**
 
 A modern Python/Flask event processing system inspired by [paperTrail](https://github.com/bigsnarfdude/paperTrail), [akka-http-algebird](https://github.com/bigsnarfdude/akka-http-algebird), and [Twitter Algebird](https://github.com/twitter/algebird). Features memory-efficient compliance monitoring using HyperLogLog, Bloom Filters, TopK algorithms, and composable Monoid abstractions for distributed aggregation.
