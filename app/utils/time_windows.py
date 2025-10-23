@@ -190,6 +190,23 @@ class RedisKeyGenerator:
         return f"topk:{metric}:{system}:{window.value}:{bucket}"
 
     @staticmethod
+    def tdigest_key(metric: str, system: str, window: TimeWindow, timestamp: datetime) -> str:
+        """
+        Generate T-Digest key (NEW!)
+
+        Args:
+            metric: Metric name (e.g., "api_latency", "query_time")
+            system: System name
+            window: Time window
+            timestamp: Event timestamp
+
+        Returns:
+            Redis key (e.g., "tdigest:api_latency:prod:1h:2025-10-16T10:00:00")
+        """
+        bucket = TimeWindowBucketer.bucket_timestamp(timestamp, window)
+        return f"tdigest:{metric}:{system}:{window.value}:{bucket}"
+
+    @staticmethod
     def event_stream_key() -> str:
         """Generate event stream pub/sub key"""
         return "events:stream"

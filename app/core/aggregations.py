@@ -16,9 +16,8 @@ from app.core.monoids.bloom_monoid import BloomFilterUnionMonoid
 from app.core.monoids.topk_monoid import TopKMonoid
 from app.core.monoids.moments_monoid import MomentsMonoid
 from app.utils.time_windows import TimeWindow, TimeWindowBucketer
-from app.core.sketches.hyperloglog import HyperLogLog
-from app.core.sketches.bloom_filter import BloomFilter
-from app.core.sketches.count_min import TopK
+# Use algesnake implementations
+from algesnake.approximate import HyperLogLog, BloomFilter, TopK
 from app.core.monoids.moments_monoid import Moments
 
 logger = logging.getLogger(__name__)
@@ -123,8 +122,11 @@ class HLLTimeWindowAggregator:
 
         Returns:
             Daily HLL with deduplicated cardinality
+
+        Note: With algesnake, this is now a simple sum()!
         """
-        return self.aggregator.aggregate_windows(hourly_hlls)
+        # Use algesnake's native sum() - much simpler!
+        return sum(hourly_hlls.values())
 
     def daily_to_weekly(self, daily_hlls: Dict[str, HyperLogLog]) -> HyperLogLog:
         """
@@ -135,8 +137,11 @@ class HLLTimeWindowAggregator:
 
         Returns:
             Weekly HLL
+
+        Note: With algesnake, this is now a simple sum()!
         """
-        return self.aggregator.aggregate_windows(daily_hlls)
+        # Use algesnake's native sum() - much simpler!
+        return sum(daily_hlls.values())
 
     def rolling_window(
         self,
@@ -363,12 +368,14 @@ def merge_hourly_to_daily_hll(hourly_hlls: List[HyperLogLog]) -> HyperLogLog:
 
     Returns:
         Daily HLL
+
+    Note: With algesnake, this is now a simple sum()!
     """
     if not hourly_hlls:
         return HyperLogLog()
 
-    monoid = HLLMonoid(precision=hourly_hlls[0].precision)
-    return monoid.sum(hourly_hlls)
+    # Use algesnake's native sum() - much simpler!
+    return sum(hourly_hlls)
 
 
 def merge_systems_hll(system_hlls: Dict[str, HyperLogLog]) -> HyperLogLog:
@@ -380,13 +387,14 @@ def merge_systems_hll(system_hlls: Dict[str, HyperLogLog]) -> HyperLogLog:
 
     Returns:
         Combined HLL
+
+    Note: With algesnake, this is now a simple sum()!
     """
     if not system_hlls:
         return HyperLogLog()
 
-    hlls = list(system_hlls.values())
-    monoid = HLLMonoid(precision=hlls[0].precision)
-    return monoid.sum(hlls)
+    # Use algesnake's native sum() - much simpler!
+    return sum(system_hlls.values())
 
 
 def merge_topk_windows(topk_list: List[TopK]) -> TopK:
@@ -398,9 +406,11 @@ def merge_topk_windows(topk_list: List[TopK]) -> TopK:
 
     Returns:
         Merged TopK
+
+    Note: With algesnake, this is now a simple sum()!
     """
     if not topk_list:
         return TopK()
 
-    monoid = TopKMonoid(k=topk_list[0].k)
-    return monoid.sum(topk_list)
+    # Use algesnake's native sum() - much simpler!
+    return sum(topk_list)
