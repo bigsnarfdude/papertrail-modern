@@ -6,6 +6,7 @@ A modern Python/Flask event processing system inspired by [paperTrail](https://g
 
 ## Features
 
+
 ### Probabilistic Data Structures (Custom Implementation)
 - **HyperLogLog (HLL)**: Count distinct users, IPs, sessions with ±2% accuracy using only ~12KB memory
 - **Bloom Filters**: Fast "has user accessed system?" queries with 0.1% false positive rate
