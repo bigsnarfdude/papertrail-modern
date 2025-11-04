@@ -12,9 +12,8 @@ import redis
 from redis import Redis
 
 from app.config import settings
-from app.core.sketches.hyperloglog import HyperLogLog
-from app.core.sketches.bloom_filter import BloomFilter
-from app.core.sketches.count_min import TopK, HeavyHittersDetector
+# Use algesnake implementations
+from algesnake.approximate import HyperLogLog, BloomFilter, TopK, TDigest
 from app.utils.time_windows import (
     TimeWindow,
     TimeWindowBucketer,
@@ -305,6 +304,191 @@ class RedisStorage:
     def _save_topk(self, key: str, topk: TopK, window: TimeWindow) -> None:
         """Save TopK to Redis"""
         data = pickle.dumps(topk)
+        ttl = self.bucketer.get_retention_seconds(window)
+        self.redis.setex(key, ttl, data)
+
+    # =====================
+    # T-Digest Operations (NEW! Percentile estimation)
+    # =====================
+
+    def add_to_tdigest(
+        self,
+        metric: str,
+        system: str,
+        value: float,
+        timestamp: Optional[datetime] = None,
+        window: TimeWindow = TimeWindow.HOUR,
+    ) -> None:
+        """
+        Add value to T-Digest for percentile estimation
+
+        Args:
+            metric: Metric name (e.g., "api_latency", "query_time")
+            system: System name
+            value: Numeric value to add (e.g., latency in milliseconds)
+            timestamp: Event timestamp
+            window: Time window
+
+        Use cases:
+            - Track API response times for SLA monitoring
+            - Track database query latencies
+            - Track file access times for compliance auditing
+        """
+        timestamp = timestamp or datetime.utcnow()
+        key = self.key_gen.tdigest_key(metric, system, window, timestamp)
+
+        # Load existing T-Digest or create new
+        tdigest = self._load_tdigest(key)
+        if tdigest is None:
+            tdigest = TDigest(compression=100)
+
+        tdigest.add(value)
+
+        # Save back to Redis
+        self._save_tdigest(key, tdigest, window)
+
+    def get_tdigest_percentile(
+        self,
+        metric: str,
+        system: str,
+        percentile: float,
+        timestamp: Optional[datetime] = None,
+        window: TimeWindow = TimeWindow.HOUR,
+    ) -> Optional[float]:
+        """
+        Get percentile value from T-Digest
+
+        Args:
+            metric: Metric name
+            system: System name
+            percentile: Percentile to query (0-100, e.g., 50 for median, 95 for p95)
+            timestamp: Query timestamp
+            window: Time window
+
+        Returns:
+            Estimated percentile value or None if no data
+
+        Examples:
+            # Get median API latency
+            p50 = storage.get_tdigest_percentile("api_latency", "prod", 50)
+
+            # Get p95 for SLA monitoring
+            p95 = storage.get_tdigest_percentile("api_latency", "prod", 95)
+
+            # Get p99 for anomaly detection
+            p99 = storage.get_tdigest_percentile("api_latency", "prod", 99)
+        """
+        timestamp = timestamp or datetime.utcnow()
+        key = self.key_gen.tdigest_key(metric, system, window, timestamp)
+
+        tdigest = self._load_tdigest(key)
+        if tdigest is None:
+            return None
+
+        return tdigest.percentile(percentile)
+
+    def get_tdigest_percentiles(
+        self,
+        metric: str,
+        system: str,
+        percentiles: List[float],
+        timestamp: Optional[datetime] = None,
+        window: TimeWindow = TimeWindow.HOUR,
+    ) -> Dict[float, Optional[float]]:
+        """
+        Get multiple percentiles at once
+
+        Args:
+            metric: Metric name
+            system: System name
+            percentiles: List of percentiles to query (e.g., [50, 95, 99])
+            timestamp: Query timestamp
+            window: Time window
+
+        Returns:
+            Dict mapping percentile to value
+
+        Example:
+            # Get p50, p95, p99 for SLA dashboard
+            stats = storage.get_tdigest_percentiles(
+                "api_latency", "prod", [50, 95, 99]
+            )
+            # {50: 45.2, 95: 189.7, 99: 512.3}
+        """
+        timestamp = timestamp or datetime.utcnow()
+        key = self.key_gen.tdigest_key(metric, system, window, timestamp)
+
+        tdigest = self._load_tdigest(key)
+        if tdigest is None:
+            return {p: None for p in percentiles}
+
+        return {p: tdigest.percentile(p) for p in percentiles}
+
+    def merge_tdigest_windows(
+        self,
+        metric: str,
+        system: str,
+        window: TimeWindow,
+        start_time: datetime,
+        end_time: datetime,
+    ) -> Optional[TDigest]:
+        """
+        Merge T-Digests across time windows (monoid operation!)
+
+        Args:
+            metric: Metric name
+            system: System name
+            window: Window granularity
+            start_time: Start time
+            end_time: End time
+
+        Returns:
+            Merged T-Digest or None
+
+        Example:
+            # Get daily p95 from hourly data
+            daily_td = storage.merge_tdigest_windows(
+                metric="api_latency",
+                system="prod",
+                window=TimeWindow.HOUR,
+                start_time=datetime(2025, 10, 16, 0),
+                end_time=datetime(2025, 10, 16, 23)
+            )
+            p95_daily = daily_td.percentile(95)
+        """
+        # Generate timestamps
+        timestamps = []
+        current = start_time
+        duration = TimeWindowBucketer.get_window_duration(window)
+
+        while current <= end_time:
+            timestamps.append(current)
+            current += duration
+
+        # Fetch T-Digests
+        tdigests = []
+        for ts in timestamps:
+            key = self.key_gen.tdigest_key(metric, system, window, ts)
+            td = self._load_tdigest(key)
+            if td is not None:
+                tdigests.append(td)
+
+        if not tdigests:
+            return None
+
+        # Merge using algesnake's native sum() - it's a monoid!
+        return sum(tdigests)
+
+    def _load_tdigest(self, key: str) -> Optional[TDigest]:
+        """Load T-Digest from Redis"""
+        data = self.redis.get(key)
+        if data is None:
+            return None
+        return pickle.loads(data)
+
+    def _save_tdigest(self, key: str, tdigest: TDigest, window: TimeWindow) -> None:
+        """Save T-Digest to Redis"""
+        data = pickle.dumps(tdigest)
         ttl = self.bucketer.get_retention_seconds(window)
         self.redis.setex(key, ttl, data)
 

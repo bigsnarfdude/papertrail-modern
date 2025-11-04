@@ -1,13 +1,16 @@
 """
-TopK Monoid implementation
+TopK Monoid implementation - Now powered by algesnake!
 
 Enables composable heavy hitters tracking across:
 - Time windows (merge hourly top users)
 - Systems (combined top users across systems)
 - Distributed workers (merge partial top-K results)
+
+MIGRATION NOTE: This now uses algesnake's optimized TopK implementation
+with Pythonic operator overloading (+ operator for merging).
 """
 from app.core.monoid import Monoid
-from app.core.sketches.count_min import TopK
+from algesnake.approximate import TopK
 
 
 class TopKMonoid(Monoid[TopK]):
@@ -60,8 +63,11 @@ class TopKMonoid(Monoid[TopK]):
 
         Returns:
             Merged TopK with combined counts
+
+        Note: algesnake TopK supports the + operator natively!
         """
-        return a.merge(b)
+        # Use algesnake's Pythonic + operator
+        return a + b
 
     def sum_time_windows(self, topks: list) -> TopK:
         """

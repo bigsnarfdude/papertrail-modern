@@ -11,9 +11,10 @@ pydantic-settings==2.1.0
 redis==5.0.1
 hiredis==2.2.3
 
-# Probabilistic Data Structures
-datasketch==1.6.4
-pybloom-live==4.0.0
+# Abstract Algebra & Probabilistic Data Structures
+git+https://github.com/bigsnarfdude/algesnake.git
+
+# Hash Functions
 mmh3==4.1.0
 
 # Background Tasks

@@ -1,5 +1,5 @@
 """
-Monoid abstractions inspired by Twitter Algebird
+Monoid abstractions inspired by Twitter Algebird - Now powered by algesnake!
 
 A Monoid is an algebraic structure with:
 1. An identity element (zero)
@@ -10,60 +10,41 @@ This enables:
 - Distributed processing
 - Time window merging
 - Incremental updates
+
+MIGRATION NOTE: This module now uses algesnake library for improved performance
+and better API ergonomics while maintaining backward compatibility.
 """
-from abc import ABC, abstractmethod
 from typing import TypeVar, Generic, List, Optional
 from functools import reduce
+
+# Import algesnake abstract classes
+from algesnake.abstract import Monoid as AlgesnakeMonoid
+from algesnake.abstract import Semigroup as AlgessnakeSemigroup
+from algesnake.abstract import Group as AlgesnakeGroup
+from algesnake.abstract import Ring as AlgesnakeRing
+
+# Import concrete monoid implementations from algesnake
+from algesnake import Add, Multiply, Max, Min
+from algesnake import SetMonoid, ListMonoid, StringMonoid
 
 T = TypeVar('T')
 
 
-class Monoid(ABC, Generic[T]):
+# ============================================================
+# Compatibility Layer: Maintain backward compatibility
+# ============================================================
+
+class Monoid(AlgesnakeMonoid[T]):
     """
-    Abstract Monoid interface
+    Monoid interface - now powered by algesnake
+
+    This class extends algesnake's Monoid to maintain backward compatibility
+    with existing code while providing access to algesnake's optimized implementations.
 
     Laws that implementations must satisfy:
     1. Identity: plus(zero, x) == x and plus(x, zero) == x
     2. Associativity: plus(plus(a, b), c) == plus(a, plus(b, c))
     """
-
-    @abstractmethod
-    def zero(self) -> T:
-        """
-        Identity element
-
-        Returns:
-            The zero/identity element for this monoid
-        """
-        pass
-
-    @abstractmethod
-    def plus(self, a: T, b: T) -> T:
-        """
-        Associative binary operation
-
-        Args:
-            a: First element
-            b: Second element
-
-        Returns:
-            Combined element
-        """
-        pass
-
-    def sum(self, items: List[T]) -> T:
-        """
-        Sum a list of elements using the monoid operation
-
-        Args:
-            items: List of elements to combine
-
-        Returns:
-            Combined result
-        """
-        if not items:
-            return self.zero()
-        return reduce(self.plus, items, self.zero())
 
     def sum_option(self, items: List[Optional[T]]) -> Optional[T]:
         """
@@ -81,16 +62,13 @@ class Monoid(ABC, Generic[T]):
         return self.sum(non_none)
 
 
-class SemigroupLike(ABC, Generic[T]):
+class SemigroupLike(AlgessnakeSemigroup[T]):
     """
     Semigroup: Like a Monoid but without requiring zero/identity
     Useful when identity element is not obvious
-    """
 
-    @abstractmethod
-    def plus(self, a: T, b: T) -> T:
-        """Associative binary operation"""
-        pass
+    Now powered by algesnake!
+    """
 
     def sum_nonempty(self, items: List[T]) -> Optional[T]:
         """
@@ -107,47 +85,23 @@ class SemigroupLike(ABC, Generic[T]):
         return reduce(self.plus, items)
 
 
-class Ring(Monoid[T]):
+class Ring(AlgesnakeRing[T]):
     """
     Ring: Extends Monoid with multiplication
     Has two operations: plus (addition) and times (multiplication)
+
+    Now powered by algesnake!
     """
-
-    @abstractmethod
-    def one(self) -> T:
-        """Multiplicative identity"""
-        pass
-
-    @abstractmethod
-    def times(self, a: T, b: T) -> T:
-        """Multiplication operation"""
-        pass
-
-    def product(self, items: List[T]) -> T:
-        """Product of elements using multiplication"""
-        if not items:
-            return self.one()
-        return reduce(self.times, items, self.one())
+    pass
 
 
-class Group(Monoid[T]):
+class Group(AlgesnakeGroup[T]):
     """
     Group: Extends Monoid with inverse operation
     Every element has an inverse under plus
+
+    Now powered by algesnake!
     """
-
-    @abstractmethod
-    def negate(self, a: T) -> T:
-        """
-        Inverse operation
-
-        Args:
-            a: Element to invert
-
-        Returns:
-            Inverse element such that plus(a, negate(a)) == zero
-        """
-        pass
 
     def minus(self, a: T, b: T) -> T:
         """
@@ -164,77 +118,18 @@ class Group(Monoid[T]):
 
 
 # ============================================================
-# Concrete Monoid Implementations for Basic Types
+# Concrete Monoid Implementations - Using algesnake
 # ============================================================
 
-class IntMonoid(Monoid[int]):
-    """Monoid for integers under addition"""
+# Re-export algesnake monoids with backward-compatible names
+IntMonoid = Add  # algesnake's Add monoid for integers
+FloatMonoid = Add  # algesnake's Add also works for floats
 
-    def zero(self) -> int:
-        return 0
+# algesnake's concrete implementations are already optimal
+MaxMonoid = Max  # algesnake's Max monoid
+MinMonoid = Min  # algesnake's Min monoid
 
-    def plus(self, a: int, b: int) -> int:
-        return a + b
-
-
-class FloatMonoid(Monoid[float]):
-    """Monoid for floats under addition"""
-
-    def zero(self) -> float:
-        return 0.0
-
-    def plus(self, a: float, b: float) -> float:
-        return a + b
-
-
-class StringMonoid(Monoid[str]):
-    """Monoid for strings under concatenation"""
-
-    def zero(self) -> str:
-        return ""
-
-    def plus(self, a: str, b: str) -> str:
-        return a + b
-
-
-class ListMonoid(Monoid[List[T]]):
-    """Monoid for lists under concatenation"""
-
-    def zero(self) -> List[T]:
-        return []
-
-    def plus(self, a: List[T], b: List[T]) -> List[T]:
-        return a + b
-
-
-class SetMonoid(Monoid[set]):
-    """Monoid for sets under union"""
-
-    def zero(self) -> set:
-        return set()
-
-    def plus(self, a: set, b: set) -> set:
-        return a | b
-
-
-class MaxMonoid(Monoid[float]):
-    """Monoid for maximum value (uses -inf as identity)"""
-
-    def zero(self) -> float:
-        return float('-inf')
-
-    def plus(self, a: float, b: float) -> float:
-        return max(a, b)
-
-
-class MinMonoid(Monoid[float]):
-    """Monoid for minimum value (uses +inf as identity)"""
-
-    def zero(self) -> float:
-        return float('inf')
-
-    def plus(self, a: float, b: float) -> float:
-        return min(a, b)
+# Note: StringMonoid, ListMonoid, SetMonoid are already imported from algesnake above
 
 
 # ============================================================

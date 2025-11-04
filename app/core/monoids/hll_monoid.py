@@ -1,14 +1,17 @@
 """
-HyperLogLog Monoid implementation
+HyperLogLog Monoid implementation - Now powered by algesnake!
 
 Enables composable cardinality estimation across:
 - Time windows (merge hourly HLLs into daily)
 - Systems (merge multiple system HLLs)
 - Distributed workers (merge partial results)
+
+MIGRATION NOTE: This now uses algesnake's optimized HyperLogLog implementation
+with Pythonic operator overloading (+ operator for merging).
 """
 from typing import List
 from app.core.monoid import Monoid
-from app.core.sketches.hyperloglog import HyperLogLog
+from algesnake.approximate import HyperLogLog
 
 
 class HLLMonoid(Monoid[HyperLogLog]):
@@ -64,13 +67,16 @@ class HLLMonoid(Monoid[HyperLogLog]):
 
         Raises:
             ValueError: If HLLs have different precision
+
+        Note: algesnake HyperLogLog supports the + operator natively!
         """
         if a.precision != b.precision:
             raise ValueError(
                 f"Cannot merge HLLs with different precision: {a.precision} vs {b.precision}"
             )
 
-        return a.merge(b)
+        # Use algesnake's Pythonic + operator for merging
+        return a + b
 
     def sum_time_windows(self, hlls: List[HyperLogLog]) -> HyperLogLog:
         """

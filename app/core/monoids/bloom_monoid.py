@@ -1,14 +1,17 @@
 """
-Bloom Filter Monoid implementation
+Bloom Filter Monoid implementation - Now powered by algesnake!
 
 Enables composable membership testing across:
 - Time windows (union of hourly filters)
 - Systems (combined activity across systems)
 - Distributed workers (merge partial results)
+
+MIGRATION NOTE: This now uses algesnake's optimized Bloom Filter implementation
+with Pythonic operator overloading (+ operator for union).
 """
 from typing import List
 from app.core.monoid import Monoid, SemigroupLike
-from app.core.sketches.bloom_filter import BloomFilter
+from algesnake.approximate import BloomFilter
 
 
 class BloomFilterMonoid(SemigroupLike[BloomFilter]):
@@ -54,8 +57,11 @@ class BloomFilterMonoid(SemigroupLike[BloomFilter]):
 
         Raises:
             ValueError: If filters have incompatible parameters
+
+        Note: algesnake BloomFilter supports the + operator natively!
         """
-        return a.union(b)
+        # Use algesnake's Pythonic + operator for union
+        return a + b
 
     def intersection(self, a: BloomFilter, b: BloomFilter) -> BloomFilter:
         """
@@ -131,8 +137,11 @@ class BloomFilterUnionMonoid(Monoid[BloomFilter]):
 
         Returns:
             Union of both filters
+
+        Note: algesnake BloomFilter supports the + operator natively!
         """
-        return a.union(b)
+        # Use algesnake's Pythonic + operator
+        return a + b
 
     def sum_time_windows(self, filters: List[BloomFilter]) -> BloomFilter:
         """
