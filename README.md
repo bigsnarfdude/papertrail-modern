@@ -316,12 +316,3 @@ pytest tests/test_hyperloglog.py
 ## License
 
 MIT
-
-## Contributing
-
-Pull requests welcome! Areas for improvement:
-- Additional probabilistic structures (T-Digest, MinHash)
-- GraphQL API support
-- Elasticsearch integration
-- Kubernetes deployment
-- Load testing suite
