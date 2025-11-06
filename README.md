@@ -25,10 +25,10 @@ A modern Python/Flask event processing system inspired by [paperTrail](https://g
 - **Distributed Processing**: Merge results from parallel workers
 
 ### Infosec Compliance Use Cases
-✅ **Count Distinct**: "How many unique users accessed sensitive_db today?"
-✅ **Activity Tracking**: "Did user X access system Y?" (privacy-preserving)
-✅ **Anomaly Detection**: "Which IPs have most failed login attempts?"
-✅ **Leaderboards**: "Top 10 most active API consumers"
+- **Count Distinct**: "How many unique users accessed sensitive_db today?"
+- **Activity Tracking**: "Did user X access system Y?" (privacy-preserving)
+- **Anomaly Detection**: "Which IPs have most failed login attempts?"
+- **Leaderboards**: "Top 10 most active API consumers"
 
 ### Key Advantages
 - **Memory Efficient**: 3000x memory reduction vs storing raw data
